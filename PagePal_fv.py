@@ -131,15 +131,15 @@ def main():
 
     # Check if there are already stored Chroma documents
     if 'chroma_stores' in st.session_state:
-        doc_options = list(st.session_state['chroma_stores'].keys()) + ['Other...']
+        doc_options = list(st.session_state['chroma_stores'].keys()) + ['Add New']
     else:
-        doc_options = ['Other...']
+        doc_options = ['Add New']
 
     # Allow the user to select which document to query
     selected_doc = st.selectbox("Select document to query or upload a new one:", doc_options)
 
-    # If the user selects 'Other...', upload a PDF and create the vector store
-    if selected_doc == 'Other...':
+    # If the user selects 'Add New', upload a PDF and create the vector store
+    if selected_doc == 'Add New':
         uploaded_file = upload_pdf()
         if uploaded_file is None:
             st.write("Please upload a PDF")
