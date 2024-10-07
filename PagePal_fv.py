@@ -16,8 +16,10 @@ def time_taken(func):
         t1 = time.time()
         result = func(*args, **kwargs)
         t2 = time.time() - t1
-        st.write(f"{func.__name__} ran in {t2} seconds")
+        # st.write(f"{func.__name__} ran in {t2} seconds")
+        st.markdown(f'<p style="color:grey;">{f"{func.__name__} ran in {t2} seconds"}</p>', unsafe_allow_html=True)
         return result
+        
     return wrapper
 
 # Set up environment variables
@@ -28,7 +30,7 @@ def setup_environment():
 # Upload PDF
 @time_taken
 def upload_pdf():
-    return st.file_uploader("Choose a PDF file", type="pdf")
+    return st.file_uploader("Upload PDF file", type="pdf")
 
 # Create temp path
 @time_taken
@@ -38,8 +40,8 @@ def create_tmp_path(uploaded_file):
         return tmp_file.name
 
 # Split text into chunks
-@time_taken
-def split_texts(pages, chunk_size, chunk_overlap, separators=['\n\n', '\n', '(?=>\. )', ' ', '']):
+@time_taken  
+def split_texts(pages, chunk_size, chunk_overlap, separators=['\n\n', '\n', r'(?=>\. )', ' ', '']):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
@@ -108,17 +110,18 @@ def perform_similarity_search(db, query, k=1):
 # Main function to run the Streamlit app
 @time_taken
 def main():
-    st.title("PagePal - PDF Chat")
+    # st.title(":blue[PagePal - PDF Chat]")
+    st.markdown(f'<h1 style="color:{"#FF4B4B"};">{"PagePal - PDF Chat"}</h1>', unsafe_allow_html=True)
     warnings.filterwarnings('ignore')
     setup_environment()
 
     # Sidebar sliders for text splitting parameters
-    st.sidebar.title("Text Splitting Parameters")
+    st.sidebar.title(":grey[Text Splitting Parameters]")
     chunk_size = st.sidebar.slider("Chunk Size", min_value=500, max_value=10000, value=5000, step=100)
     chunk_overlap = st.sidebar.slider("Chunk Overlap", min_value=0, max_value=500, value=0)
 
     # Sidebar sliders for LLM parameters
-    st.sidebar.title("LLM Initialization Parameters")
+    st.sidebar.title(":grey[LLM Initialization Parameters]")
     temperature = st.sidebar.slider("Temperature", min_value=0.0, max_value=1.0, value=0.1, step=0.01)
     max_new_tokens = st.sidebar.slider("Max New Tokens", min_value=1, max_value=1000, value=500)
     top_p = st.sidebar.slider("Top P", min_value=0.0, max_value=1.0, value=0.1, step=0.01)
@@ -159,6 +162,10 @@ def main():
         # Set up Chroma database for this specific document
         db = setup_chroma_for_document(texts, embeddings, doc_name)
 
+        # Update dropdown with new database
+        st.session_state['chroma_stores'][doc_name] = db
+        st.rerun()
+        
     else:
         db = st.session_state['chroma_stores'][selected_doc]
 
@@ -174,11 +181,19 @@ def main():
             # Perform similarity search on the selected document
             context = perform_similarity_search(db, query)
             st.write("Context:", context)
+            # st.markdown(f'<p style="color:grey;">{"Context:", context}</p>', unsafe_allow_html=True)
 
             # Generate and display the response
             response = llm_chain.invoke({"context": context, "question": query})
             if response:
-                st.write("LLM Response:", response)
+                # st.write("LLM Response:", response)
+                st.markdown(f"""
+                <div style="border: 2px solid #ff9898; padding: 10px; border-radius: 5px; background-color: #F0F2F6 ;">
+                    <h4 style="color: #ff4b4b ;">LLM Response:</h4>
+                    <p style="font-size: 17px;">{response}</p>
+                </div>
+                <br>
+                """, unsafe_allow_html=True)
             else:
                 st.write("No response generated. Please try a different query.")
         else:
